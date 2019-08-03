@@ -2,11 +2,11 @@
 
 To Run:
 
-    ./run
+    bin/run
 
 To send a"scan" via the socket to a listening webpage:
 
-    ./send <value>
+    bin/send <value>
 
 (Where `<value>` is the "scanned value".)
 
@@ -17,11 +17,11 @@ Example:
 ~~~~.ruby
 # In one terminal
 cd websocket_scanner_mock
-./run
+bin/run
 
 # In a second terminal:
 cd websocket_scanner_mock
-./send LC123
-./send SK123
-./send AAA
+bin/send LC123
+bin/send SK123
+bin/send AAA
 ~~~~

@@ -1,2 +1,4 @@
 #!/usr/bin/env ruby
+# frozen_string_literal: true
+
 exec 'ruby em_websocket_server.rb'
