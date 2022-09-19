@@ -1,0 +1,11 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+# Send a login RFID scan via MesServer socket
+
+MSG = '<ScannerRFID Name="%s" ReaderId="%s" Value="%s" />'
+num = ARGV[0] || '123'
+rdr = ARGV[1] || '1'
+dev = ARGV[2] || 'RID-01'
+
+File.open('.scans.txt', 'a') { |f| f << "#{format(MSG, dev, rdr, num)}\n" }

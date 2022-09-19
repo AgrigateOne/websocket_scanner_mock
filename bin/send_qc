@@ -1,0 +1,28 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+# rubocop:disable Layout/LineLength
+
+# Send pre-packaged random messages to websocket:
+replies = {
+  s: { s: '<Data PID="12001" RecordNumber="1" PeripheralName="RFM-01" PeripheralType="RFM" Mode="1" DateTime="" SampleNumber="001" ScaleType="Brix" Measurement="%2.2f" Temperature="0.0" Msg="Ok..." />', r1: 1.0 },
+  f: { s: '<Data PID="12001" RecordNumber="1" PeripheralName="FTA-01" PeripheralType="FTA" Mode="1" DateTime="09-08-2022 14:04:08" Firmness="%2.2f" Depth="8.86" Mass="0.0" Diameter="0.0" StartPoint="60.95" StepperRatio="0.0034925005535613378" ProbeCalibration="0.7970540700000001" Msg="Ok..." />', r1: 3.0 },
+  fd: { s: '<Data PID="12001" RecordNumber="2" PeripheralName="FTA-01" PeripheralType="FTA" Mode="2" DateTime="09-08-2022 14:04:08" Firmness="%2.2f" Depth="8.86" Mass="0.0" Diameter="%2.1f" StartPoint="18.35" StepperRatio="0.0034925005535613378" ProbeCalibration="0.7970540700000001" Msg="Ok..." />', r1: 3.0, r2: 100.0 },
+  fw: { s: '<Data PID="12001" RecordNumber="3" PeripheralName="FTA-01" PeripheralType="FTA" Mode="3" DateTime="09-08-2022 14:04:08" Firmness="%2.2f" Depth="8.86" Mass="%2.1f" Diameter="0.0" StartPoint="12.38" StepperRatio="0.0034925005535613378" ProbeCalibration="0.7970540700000001" Msg="Ok..." />', r1: 3.0, r2: 100.0 },
+  w: { s: '<Data PID="12001" RecordNumber="6" PeripheralName="FTA-01" PeripheralType="FTA" Mode="4" DateTime="09-08-2022 14:04:08" Firmness="0.0" Depth="0.0" Mass="%2.1f" Diameter="0.0" StartPoint="12.38" StepperRatio="0.0034925005535613378" ProbeCalibration="0.7970540700000001" Msg="Ok..." />', r1: 100.0 },
+  d: { s: '<Data PID="12001" RecordNumber="6" PeripheralName="FTA-01" PeripheralType="FTA" Mode="5" DateTime="09-08-2022 14:04:08" Firmness="0.0" Depth="0.0" Mass="0.0" Diameter="%2.1f" StartPoint="12.38" StepperRatio="0.0034925005535613378" ProbeCalibration="0.7970540700000001" Msg="Ok..." />', r1: 100.0 }
+}
+# <Diameter PID="12001" RecordNumber="1" PeripheralName="FTA-01" PeripheralType="FTA" Mode="5" DateTime="09-12-2022 15:38:25" Firmness="0.0" Depth="0.0" Mass="0.0" Diameter="77.0" StartPoint="0.0" StepperRatio="0.0" ProbeCalibration="0.0" Msg="Ok..." />
+# <Data PID="12001" RecordNumber="2" PeripheralName="FTA-01" PeripheralType="FTA" Mode="4" DateTime="09-12-2022 15:42:56" Firmness="0.0" Depth="0.0" Mass="100.0" Diameter="0.0" StartPoint="0.0" StepperRatio="0.0034925005535613378" ProbeCalibration="0.7970540700000001" Msg="Ok..." />
+# <Data PID="12001" RecordNumber="20" PeripheralName="FTA-01" PeripheralType="FTA" Mode="1" DateTime="09-12-2022 16:03:29" Firmness="0.0" Depth="8.86" Mass="0.0" Diameter="0.0" StartPoint="12.18" StepperRatio="0.0034925005535613378" ProbeCalibration="0.0" Msg="FTA-01 Firmness=0 in firmness test..." />
+
+opt = ARGV[0] || 'f'
+raise ArgumentError, 'option must be one of: s (sugar), f (firmness), fd (Firmness/Diameter), fw (Firmness/Weight), d (Diameter) or w (weight)' unless %w[s f fd fw d w].include?(opt)
+
+hs = replies[opt.to_sym]
+ar = [rand(0.0..hs[:r1])]
+ar << rand(0.0..hs[:r2]) if hs[:r2]
+msg = format(hs[:s], *ar)
+# `echo "#{msg}" >> .scans.txt`
+File.open('.scans.txt', 'a') { |f| f << "#{msg}\n" }
+# rubocop:enable Layout/LineLength

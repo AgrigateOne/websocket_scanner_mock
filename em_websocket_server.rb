@@ -1,4 +1,5 @@
 # rubocop:disable Style/FrozenStringLiteralComment
+# rubocop:disable Layout/LineLength
 
 require 'bundler/inline'
 
@@ -16,10 +17,28 @@ end
 
 File.open('.scans.txt', 'w') {}
 
+port = ARGV[0] || 2115
+mode = ARGV[1] || 'apk'
+
+QC_RESPONSES = [
+  ['Type=RFM_Start', %(<DisplayMessage PID="601" Msg="RFM Peripheral='RFM-01'  Device='/dev/ttyS1' selected and started..." />)],
+  ['Type=RFM_Zero', %(<DisplayMessage PID="601" Msg="RFM Peripheral='RFM-01'  Device='/dev/ttyS1' ZERO'ing..." />)],
+  ['Type=RFM_Finish', %(<DisplayMessage PID="601" Msg="RFM Peripheral='RFM-01'  Device='/dev/ttyS1' connection closed..." />)],
+  ['Type=FTA_Start', %(<DisplayMessage PID="601" Msg="FTA Peripheral='FTA-01'  Device='/dev/ttyS0' selected and started..." />)],
+  ['Type=FTA_Firmness', %(<DisplayMessage PID="601" Msg="FTA Peripheral='FTA-01' Firmness mode selected..." />)],
+  ['Type=FTA_RetractProbe', %(<DisplayMessage PID="601" Msg="FTA Peripheral='FTA-01' Retract probe mode selected..." />)],
+  ['Type=FTA_Firmness_Diameter', %(<DisplayMessage PID="601" Msg="FTA Peripheral='FTA-01' Firmness & Diameter mode selected..." />)],
+  ['Type=FTA_Firmness_Weight', %(<DisplayMessage PID="601" Msg="FTA Peripheral='FTA-01' Firmness & Weight mode selected..." />)],
+  ['Type=FTA_Diameter', %(<DisplayMessage PID="601" Msg="FTA Peripheral='FTA-01' Diameter mode selected..." />)],
+  ['Type=FTA_Weight', %(<DisplayMessage PID="601" Msg="FTA Peripheral='FTA-01' Weight mode selected..." />)],
+  ['Type=FTA_Finish', %(<DisplayMessage PID="601" Msg="FTA Peripheral='FTA-01'  Device='/dev/ttyS0' connection closed..." />)],
+  ['Type=Sysinfo', %(<DisplayMessage PID="601" Company="NoSoft" IP="localhost" Server="192.168.50.54" ServerPort="2080" Revision="4.95"/>)]
+].freeze
+
 EM.run do # rubocop:disable Metrics/BlockLength
   @current_type = 'NOT DEFINED'
   @scans = File.readlines('.scans.txt')
-  EM::WebSocket.run(host: '0.0.0.0', port: 2115) do |ws| # rubocop:disable Metrics/BlockLength
+  EM::WebSocket.run(host: '0.0.0.0', port: port) do |ws| # rubocop:disable Metrics/BlockLength
     ws.onopen do |handshake|
       puts 'WebSocket connection open'
 
@@ -28,19 +47,30 @@ EM.run do # rubocop:disable Metrics/BlockLength
 
       # Publish message to the client
       # ws.send "Hello Client, you connected to #{handshake.path}"
-      ws.send "WS: Connected to #{handshake.path} - awaiting type declaration."
+      if mode == 'apk'
+        ws.send "WS: Connected to #{handshake.path} - awaiting type declaration."
+      else
+        ws.send '<DisplayMessage PID="601" Msg="WebSocket Connected..." />'
+      end
     end
 
     ws.onclose { puts 'WS: Connection closed' }
 
     ws.onmessage do |msg|
-      if msg.start_with?('Type')
-        @current_type = msg.delete_prefix('Type=')
-        puts "WS: Type set to: #{@current_type}"
-        ws.send "WS: Type set to: #{@current_type}"
+      if mode == 'apk'
+        if msg.start_with?('Type')
+          @current_type = msg.delete_prefix('Type=')
+          puts "WS: Type set to: #{@current_type}"
+          ws.send "WS: Type set to: #{@current_type}"
+        else
+          puts "WS: Invalid message: #{msg}"
+          ws.send "WS: Invalid message: #{msg}"
+        end
       else
-        puts "WS: Invalid message: #{msg}"
-        ws.send "WS: Invalid message: #{msg}"
+        puts "WS: received: #{msg}"
+        # inner = 'selected and started [THIS MSG WILL VARY]...'
+        # ws.send %(<DisplayMessage PID="601" Msg="FTA Peripheral='FTA-01'  Device='/dev/ttyS0' #{inner}" />)
+        ws.send QC_RESPONSES.select { |k, _| msg.start_with?(k) }.flatten.last || 'Do not have correct response...'
       end
     end
 
@@ -55,13 +85,22 @@ EM.run do # rubocop:disable Metrics/BlockLength
           new_scans = latest_scans.drop(@scans.length)
           new_scans.each do |scan|
             puts ">> Sending #{scan}"
-            ws.send "[SCAN]#{scan.chomp},#{@current_type},#{Time.now}"
+            if scan.start_with?('[LOGIN]')
+              ws.send "#{scan.chomp},#{@current_type},#{Time.now}"
+            elsif scan.start_with?('[SCALE]')
+              ws.send "#{scan.chomp},#{@current_type},#{Time.now}"
+            elsif scan.start_with?('[SCAN]')
+              ws.send "[SCAN]#{scan.chomp},#{@current_type},#{Time.now}"
+            else
+              ws.send scan.chomp
+            end
             @scans << scan
           end
         end
-        sleep 5
+        sleep 3
       end
     end
   end
 end
+# rubocop:enable Layout/LineLength
 # rubocop:enable Style/FrozenStringLiteralComment
