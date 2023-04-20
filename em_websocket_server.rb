@@ -21,18 +21,19 @@ port = ARGV[0] || 2115
 mode = ARGV[1] || 'apk'
 
 QC_RESPONSES = [
-  ['Type=RFM_Start', %(<DisplayMessage PID="601" Msg="RFM Peripheral='RFM-01'  Device='/dev/ttyS1' selected and started..." />)],
-  ['Type=RFM_Zero', %(<DisplayMessage PID="601" Msg="RFM Peripheral='RFM-01'  Device='/dev/ttyS1' ZERO'ing..." />)],
-  ['Type=RFM_Finish', %(<DisplayMessage PID="601" Msg="RFM Peripheral='RFM-01'  Device='/dev/ttyS1' connection closed..." />)],
-  ['Type=FTA_Start', %(<DisplayMessage PID="601" Msg="FTA Peripheral='FTA-01'  Device='/dev/ttyS0' selected and started..." />)],
-  ['Type=FTA_Firmness', %(<DisplayMessage PID="601" Msg="FTA Peripheral='FTA-01' Firmness mode selected..." />)],
-  ['Type=FTA_RetractProbe', %(<DisplayMessage PID="601" Msg="FTA Peripheral='FTA-01' Retract probe mode selected..." />)],
-  ['Type=FTA_Firmness_Diameter', %(<DisplayMessage PID="601" Msg="FTA Peripheral='FTA-01' Firmness & Diameter mode selected..." />)],
-  ['Type=FTA_Firmness_Weight', %(<DisplayMessage PID="601" Msg="FTA Peripheral='FTA-01' Firmness & Weight mode selected..." />)],
-  ['Type=FTA_Diameter', %(<DisplayMessage PID="601" Msg="FTA Peripheral='FTA-01' Diameter mode selected..." />)],
-  ['Type=FTA_Weight', %(<DisplayMessage PID="601" Msg="FTA Peripheral='FTA-01' Weight mode selected..." />)],
-  ['Type=FTA_Finish', %(<DisplayMessage PID="601" Msg="FTA Peripheral='FTA-01'  Device='/dev/ttyS0' connection closed..." />)],
-  ['Type=Sysinfo', %(<DisplayMessage PID="601" Company="NoSoft" IP="localhost" Server="192.168.50.54" ServerPort="2080" Revision="4.95"/>)]
+  ['Type=RFM_Start', %(<MessageWS Status="true" Msg="RFM Peripheral='RFM-01'  Device='/dev/ttyS1' selected and started..." />)],
+  ['Type=RFM_Zero', %(<MessageWS Status="true" Msg="RFM Peripheral='RFM-01'  Device='/dev/ttyS1' ZERO'ing..." />)],
+  ['Type=RFM_Finish', %(<MessageWS Status="true" Msg="RFM Peripheral='RFM-01'  Device='/dev/ttyS1' connection closed..." />)],
+  ['Type=MAF_Start', %(<MessageWS Status="true" Msg="MAF Peripheral='MAF'  Device='/dev/ttyS0' selected and started..." />)],
+  ['Type=FTA_Start', %(<MessageWS Status="true" Msg="FTA Peripheral='FTA-01'  Device='/dev/ttyS0' selected and started..." />)],
+  ['Type=FTA_Firmness', %(<MessageWS Status="true" Msg="FTA Peripheral='FTA-01' Firmness mode selected..." />)],
+  ['Type=FTA_RetractProbe', %(<MessageWS Status="true" Msg="FTA Peripheral='FTA-01' Retract probe mode selected..." />)],
+  ['Type=FTA_Firmness_Diameter', %(<MessageWS Status="true" Msg="FTA Peripheral='FTA-01' Firmness & Diameter mode selected..." />)],
+  ['Type=FTA_Firmness_Weight', %(<MessageWS Status="true" Msg="FTA Peripheral='FTA-01' Firmness & Weight mode selected..." />)],
+  ['Type=FTA_Diameter', %(<MessageWS Status="true" Msg="FTA Peripheral='FTA-01' Diameter mode selected..." />)],
+  ['Type=FTA_Weight', %(<MessageWS Status="true" Msg="FTA Peripheral='FTA-01' Weight mode selected..." />)],
+  ['Type=FTA_Finish', %(<MessageWS Status="true" Msg="FTA Peripheral='FTA-01'  Device='/dev/ttyS0' connection closed..." />)],
+  ['Type=Sysinfo', %(<Data Type="SysInfo" Status="true" Company="NoSoft" IP="localhost" Server="192.168.50.54" ServerPort="2080" Revision="4.95"/>)]
 ].freeze
 
 EM.run do # rubocop:disable Metrics/BlockLength
@@ -90,7 +91,9 @@ EM.run do # rubocop:disable Metrics/BlockLength
             elsif scan.start_with?('[SCALE]')
               ws.send "#{scan.chomp},#{@current_type},#{Time.now}"
             elsif scan.start_with?('[SCAN]')
-              ws.send "[SCAN]#{scan.chomp},#{@current_type},#{Time.now}"
+              # ws.send "[SCAN]#{scan.chomp},#{@current_type},#{Time.now}"
+              # puts "||>>> #{scan.chomp},#{@current_type},#{Time.now}"
+              ws.send "#{scan.chomp},#{@current_type},#{Time.now}"
             else
               ws.send scan.chomp
             end

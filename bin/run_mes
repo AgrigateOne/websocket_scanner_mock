@@ -1,0 +1,7 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+port = ARGV[0] || 2116
+mode = ARGV[1] || 'mes'
+
+exec "ruby em_websocket_server.rb #{port} #{mode}"

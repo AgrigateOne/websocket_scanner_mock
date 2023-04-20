@@ -1,0 +1,39 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+# Send a MAF message via MesServer socket
+CANDUMP = '<Data Type="MAF" Event="DUMP" Status="%s" TipperPID="123" ID="DP01" %s/>'
+# <MAF Event="DUMP" Status="false" TipperPID=" + tipperPID  + " ID=" + tipperLine + " />
+
+BCODE = '<Data Type="MAF" Event="ONBARCODEREAD" Status="%s" TipperPID="123" ID="DP01" Bin="9901" Lot="123" %s/>'
+# <MAF Event="ONBARCODEREAD" Status="false" TipperPID=" + tipperPID + " ID=" + tipperLine + " Bin=" + tipperBin1 +
+# " Lot=" + tipperLot + " />
+#
+DUMPED = '<Data Type="MAF" Event="BINSDUMPED" Status="%s" TipperPID="123" ID="DP01" Bin="9901" Lot="123" %s/>'
+# <MAF Event="BINSDUMPED" Status="false" TipperPID=" + tipperPID + " ID=" + tipperLine + " Bin=" + tipperBin1 +
+# " Lot=" + tipperLot + " />
+#
+PRT = '<Data Type="MAF" Event="PRINTINGREADY" Status="%s" TipperLot="9901" ID="DP01" LabelPID="123" Printer="PRN-01" LabelLot="123" />'
+
+# MSG = '<ScannerRFID Name="%s" ReaderId="%s" Value="%s" />'
+type = ARGV[0] || 'd'
+ok = ARGV[1] == 'f' ? 'false' : 'true'
+err = ok == 'true' ? '' : 'Msg="some error or other" '
+
+msg = case type
+      when 'd'
+        DUMPED
+      when 'c'
+        CANDUMP
+      when 'b'
+        BCODE
+      when 'p'
+        PRT
+      when '?'
+        puts 'Type can be c: Can Dump? d: Dumped b: Barcode read or p: Printed'
+        exit
+      else
+        puts 'Type can be c: Can Dump? d: Dumped b: Barcode read or p: Printed'
+        exit
+      end
+File.open('.scans.txt', 'a') { |f| f << "#{format(msg, ok, err)}\n" }
