@@ -69,9 +69,15 @@ EM.run do # rubocop:disable Metrics/BlockLength
         end
       else
         puts "WS: received: #{msg}"
+        if msg.include?('Type=GetScaleWeight')
+          val = rand(0.0..1200.0)
+          # value could also be 'NOREAD'
+          ws.send format(%(<Scale Name="SCL-01" Type="MicroA12E" ScaleID="1" Value="%4.2f" />), val)
+        else
         # inner = 'selected and started [THIS MSG WILL VARY]...'
         # ws.send %(<DisplayMessage PID="601" Msg="FTA Peripheral='FTA-01'  Device='/dev/ttyS0' #{inner}" />)
-        ws.send QC_RESPONSES.select { |k, _| msg.start_with?(k) }.flatten.last || 'Do not have correct response...'
+          ws.send QC_RESPONSES.select { |k, _| msg.start_with?(k) }.flatten.last || 'Do not have correct response...'
+        end
       end
     end
 
